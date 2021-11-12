@@ -1,7 +1,8 @@
 #ifndef _MCP2515_H_
 #define _MCP2515_H_
 
-#include <SPI.h>
+#include "hardware/spi.h"
+#include "hardware/gpio.h"
 #include "can.h"
 
 /*
@@ -442,12 +443,22 @@ class MCP2515
             CANINTF  CANINTF_RXnIF;
         } RXB[N_RXBUFFERS];
 
+        spi_inst_t* spi_port;
         uint8_t SPICS;
 
     private:
 
-        void startSPI();
-        void endSPI();
+        inline void startSPI() {
+            asm volatile("nop \n nop \n nop");
+            gpio_put(SPICS, 0);  // Active low
+            asm volatile("nop \n nop \n nop");
+        }
+
+        inline void endSPI() {
+            asm volatile("nop \n nop \n nop");
+            gpio_put(SPICS, 1);
+            asm volatile("nop \n nop \n nop");
+        }
 
         ERROR setMode(const CANCTRL_REQOP_MODE mode);
 
@@ -460,7 +471,7 @@ class MCP2515
         void prepareId(uint8_t *buffer, const bool ext, const uint32_t id);
     
     public:
-        MCP2515(const uint8_t _CS);
+        MCP2515(spi_inst_t* _spi_port, const uint spi_baud, const uint8_t _CS);
         ERROR reset(void);
         ERROR setConfigMode();
         ERROR setListenOnlyMode();

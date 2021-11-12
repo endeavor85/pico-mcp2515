@@ -1,5 +1,8 @@
-#include "Arduino.h"
 #include "mcp2515.h"
+
+#include <string.h>
+
+#include "pico/time.h"
 
 const struct MCP2515::TXBn_REGS MCP2515::TXB[MCP2515::N_TXBUFFERS] = {
     {MCP_TXB0CTRL, MCP_TXB0SIDH, MCP_TXB0DATA},
@@ -12,35 +15,27 @@ const struct MCP2515::RXBn_REGS MCP2515::RXB[N_RXBUFFERS] = {
     {MCP_RXB1CTRL, MCP_RXB1SIDH, MCP_RXB1DATA, CANINTF_RX1IF}
 };
 
-MCP2515::MCP2515(const uint8_t _CS)
+MCP2515::MCP2515(spi_inst_t* _spi_port, const uint spi_baud, const uint8_t _CS) :
+    spi_port(_spi_port),
+    SPICS(_CS)
 {
-    SPI.begin();
+    spi_init(spi_port, spi_baud);
+    // MCP2515 uses SPI Mode 0: CPOL = 0, CPHA = 0
+    spi_set_format(spi_port, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 
-    SPICS = _CS;
-    pinMode(SPICS, OUTPUT);
     endSPI();
-}
-
-void MCP2515::startSPI() {
-    SPI.beginTransaction(SPISettings(SPI_CLOCK, MSBFIRST, SPI_MODE0));
-    digitalWrite(SPICS, LOW);
-}
-
-void MCP2515::endSPI() {
-    digitalWrite(SPICS, HIGH);
-    SPI.endTransaction();
 }
 
 MCP2515::ERROR MCP2515::reset(void)
 {
+    uint8_t buf = INSTRUCTION_RESET;
     startSPI();
-    SPI.transfer(INSTRUCTION_RESET);
+    spi_write_blocking(spi_port, &buf, 1);
     endSPI();
 
-    delay(10);
+    sleep_ms(10);
 
-    uint8_t zeros[14];
-    memset(zeros, 0, sizeof(zeros));
+    uint8_t zeros[14] = {0};
     setRegisters(MCP_TXB0CTRL, zeros, 14);
     setRegisters(MCP_TXB1CTRL, zeros, 14);
     setRegisters(MCP_TXB2CTRL, zeros, 14);
@@ -84,10 +79,17 @@ MCP2515::ERROR MCP2515::reset(void)
 
 uint8_t MCP2515::readRegister(const REGISTER reg)
 {
+    uint8_t buf[2];
+    buf[0] = INSTRUCTION_READ;
+    buf[1] = reg;
+
+    uint8_t ret;
+
     startSPI();
-    SPI.transfer(INSTRUCTION_READ);
-    SPI.transfer(reg);
-    uint8_t ret = SPI.transfer(0x00);
+    spi_write_blocking(spi_port, buf, 2);
+    // TODO: delay needed?
+    sleep_ms(10);
+    spi_read_blocking(spi_port, 0x00, &ret, 1);
     endSPI();
 
     return ret;
@@ -95,51 +97,52 @@ uint8_t MCP2515::readRegister(const REGISTER reg)
 
 void MCP2515::readRegisters(const REGISTER reg, uint8_t values[], const uint8_t n)
 {
+    uint8_t buf[] = {INSTRUCTION_READ, reg};
+
     startSPI();
-    SPI.transfer(INSTRUCTION_READ);
-    SPI.transfer(reg);
+    spi_write_blocking(spi_port, buf, 2);
     // mcp2515 has auto-increment of address-pointer
-    for (uint8_t i=0; i<n; i++) {
-        values[i] = SPI.transfer(0x00);
-    }
+    spi_read_blocking(spi_port, 0x00, values, n);
     endSPI();
 }
 
 void MCP2515::setRegister(const REGISTER reg, const uint8_t value)
 {
+    uint8_t buf[] = {INSTRUCTION_WRITE, reg, value};
+
     startSPI();
-    SPI.transfer(INSTRUCTION_WRITE);
-    SPI.transfer(reg);
-    SPI.transfer(value);
+    spi_write_blocking(spi_port, buf, 3);
     endSPI();
 }
 
 void MCP2515::setRegisters(const REGISTER reg, const uint8_t values[], const uint8_t n)
 {
+    uint8_t buf[] = {INSTRUCTION_WRITE, reg};
+    
     startSPI();
-    SPI.transfer(INSTRUCTION_WRITE);
-    SPI.transfer(reg);
-    for (uint8_t i=0; i<n; i++) {
-        SPI.transfer(values[i]);
-    }
+    spi_write_blocking(spi_port, buf, 2);
+    spi_write_blocking(spi_port, values, n);
     endSPI();
 }
 
 void MCP2515::modifyRegister(const REGISTER reg, const uint8_t mask, const uint8_t data)
 {
+    uint8_t buf[] = {INSTRUCTION_BITMOD, reg, mask, data};
+
     startSPI();
-    SPI.transfer(INSTRUCTION_BITMOD);
-    SPI.transfer(reg);
-    SPI.transfer(mask);
-    SPI.transfer(data);
+    spi_write_blocking(spi_port, buf, 4);
     endSPI();
 }
 
 uint8_t MCP2515::getStatus(void)
 {
+    uint8_t buf = INSTRUCTION_READ_STATUS;
+
+    uint8_t i;
+
     startSPI();
-    SPI.transfer(INSTRUCTION_READ_STATUS);
-    uint8_t i = SPI.transfer(0x00);
+    spi_write_blocking(spi_port, &buf, 1);
+    spi_read_blocking(spi_port, 0x00, &i, 1);
     endSPI();
 
     return i;
@@ -174,9 +177,10 @@ MCP2515::ERROR MCP2515::setMode(const CANCTRL_REQOP_MODE mode)
 {
     modifyRegister(MCP_CANCTRL, CANCTRL_REQOP, mode);
 
-    unsigned long endTime = millis() + 10;
+    const uint32_t endTime = to_ms_since_boot(make_timeout_time_ms(10));
+    
     bool modeMatch = false;
-    while (millis() < endTime) {
+    while (to_ms_since_boot(get_absolute_time()) < endTime) {
         uint8_t newmode = readRegister(MCP_CANSTAT);
         newmode &= CANSTAT_OPMOD;
 

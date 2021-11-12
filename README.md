@@ -1,5 +1,18 @@
-Arduino MCP2515 CAN interface library
+Raspberry Pi Pico MCP2515 CAN interface library
 ---------------------------------------------------------
+
+## Setup
+
+Run from VS Code in Dev Container.
+
+Following guide at: https://paulbupejr.com/raspberry-pi-pico-windows-development/
+to setup pico development environment with WSL and VS Code
+
+When adding the `PICO_SDK_PATH` variable to **Cmake: Build Environment** setting, I also had to add it to **Cmake: Environment**.  It seems as if Cmake was running another non-build command prior to 'build' that needed the SDK but couldn't find it because `PICO_SDK_PATH` wasn't being passed in.  Adding the variable to both places worked.
+
+Set kit (for compiler) to `GCC 9.2.1 arm-none-eabi`
+
+
 [![Build Status](https://travis-ci.org/autowp/arduino-mcp2515.svg?branch=master)](https://travis-ci.org/autowp/arduino-mcp2515)
 
 <br>
@@ -11,17 +24,17 @@ CAN-BUS is a common industrial bus because of its long travel distance, medium c
 - Two receive buffers with prioritized message storage
 
 **Contents:**
-* [Hardware](#hardware)
-   * [CAN Shield](#can-shield)
-   * [Do It Yourself](#do-it-yourself)
-* [Software Usage](#software-usage)
-   * [Library Installation](#library-installation)
-   * [Initialization](#initialization)
-   * [Frame data format](#frame-data-format)
-   * [Send Data](#send-data)
-   * [Receive Data](#receive-data)
-   * [Set Receive Mask and Filter](#set-receive-mask-and-filter)
-   * [Examples](#examples)
+- [Hardware:](#hardware)
+  - [CAN Shield](#can-shield)
+  - [Do It Yourself](#do-it-yourself)
+- [Software Usage:](#software-usage)
+  - [Library Installation](#library-installation)
+  - [Initialization](#initialization)
+  - [Frame data format](#frame-data-format)
+  - [Send Data](#send-data)
+  - [Receive Data](#receive-data)
+  - [Set Receive Mask and Filter](#set-receive-mask-and-filter)
+  - [Examples](#examples)
 
 # Hardware:
 
