@@ -9,9 +9,7 @@
 
 // using SPI0 at 10MHz
 #define SPI_PORT spi0
-// #define SPI_BAUD 10 * 1000000
-// using SPI0 at 1MHz
-#define SPI_BAUD 1000 * 1000
+#define SPI_BAUD 10 * 1000000
 
 #define SPI_SCK 2
 #define SPI_TX  3
@@ -19,18 +17,15 @@
 #define SPI_CS  5
 
 int main(int argc, char **argv) {
-    stdio_init_all();
-
     // turn on board LED
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
 
+    stdio_init_all();
+
     // delay before printf (otherwise it likely won't print)
     sleep_ms(500);
-
-    struct can_frame canMsg1;
-    struct can_frame canMsg2;
 
     gpio_set_function(SPI_RX, GPIO_FUNC_SPI);
     gpio_set_function(SPI_SCK, GPIO_FUNC_SPI);
@@ -48,6 +43,9 @@ int main(int argc, char **argv) {
     // SETUP
 
     MCP2515 mcp2515(SPI_PORT, SPI_BAUD, SPI_CS);
+
+    struct can_frame canMsg1;
+    struct can_frame canMsg2;
 
     canMsg1.can_id  = 0x0F6;
     canMsg1.can_dlc = 8;
@@ -80,21 +78,11 @@ int main(int argc, char **argv) {
     // LOOP
 
     while(true) {
-
       uint8_t status = mcp2515.getStatus();
-      printf("Status: %d\n", status);
+      printf("Status: 0x%02x\n", status);
 
-      MCP2515::ERROR e;
-
-      e = mcp2515.sendMessage(&canMsg1);
-      if(e == MCP2515::ERROR_OK) {
-        printf("Message sent\n");
-      }
-
-      e = mcp2515.sendMessage(&canMsg2);
-      if(e == MCP2515::ERROR_OK) {
-        printf("Message sent\n");
-      }
+      mcp2515.sendMessage(&canMsg1);
+      mcp2515.sendMessage(&canMsg2);
 
       printf("Messages sent\n");
       
