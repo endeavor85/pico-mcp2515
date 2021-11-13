@@ -22,6 +22,6 @@ include_directories(..)
 
 if (NOT PICO_NO_HARDWARE)
     add_subdirectory(CAN_read)
-    # add_subdirectory(CAN_SpeedTest)
+    add_subdirectory(CAN_SpeedTest)
     add_subdirectory(CAN_write)
 endif()
