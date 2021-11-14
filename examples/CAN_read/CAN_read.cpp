@@ -26,23 +26,10 @@ int main(int argc, char **argv) {
 
     // delay before printf (otherwise it likely won't print)
     sleep_ms(500);
-    
-    gpio_set_function(SPI_RX, GPIO_FUNC_SPI);
-    gpio_set_function(SPI_SCK, GPIO_FUNC_SPI);
-    gpio_set_function(SPI_TX, GPIO_FUNC_SPI);
-    // Make the SPI pins available to picotool
-    bi_decl(bi_3pins_with_func(SPI_RX, SPI_TX, SPI_SCK, GPIO_FUNC_SPI));
-
-    // Chip select is active-low, so we'll initialise it to a driven-high state
-    gpio_init(SPI_CS);
-    gpio_set_dir(SPI_CS, GPIO_OUT);
-    gpio_put(SPI_CS, 1);
-    // Make the CS pin available to picotool
-    bi_decl(bi_1pin_with_name(SPI_CS, "SPI CS"));
 
     // SETUP
 
-    MCP2515 mcp2515(SPI_PORT, SPI_BAUD, SPI_CS);
+    MCP2515 mcp2515(SPI_PORT, SPI_BAUD, SPI_SCK, SPI_TX, SPI_RX, SPI_CS);
 
     struct can_frame canMsg;
 

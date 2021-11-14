@@ -471,13 +471,13 @@ class MCP2515
         void prepareId(uint8_t *buffer, const bool ext, const uint32_t id);
     
     public:
-        MCP2515(spi_inst_t* _spi_port, const uint spi_baud, const uint8_t _CS);
+        MCP2515(spi_inst_t* _spi_port, const uint spi_baud, const uint spi_sck, const uint spi_tx, const uint spi_rx, const uint8_t _spi_cs);
         ERROR reset(void);
-        ERROR setConfigMode();
-        ERROR setListenOnlyMode();
-        ERROR setSleepMode();
-        ERROR setLoopbackMode();
-        ERROR setNormalMode();
+        ERROR setConfigMode(void);
+        ERROR setListenOnlyMode(void);
+        ERROR setSleepMode(void);
+        ERROR setLoopbackMode(void);
+        ERROR setNormalMode(void);
         ERROR setClkOut(const CAN_CLKOUT divisor);
         ERROR setBitrate(const CAN_SPEED canSpeed);
         ERROR setBitrate(const CAN_SPEED canSpeed, const CAN_CLOCK canClock);
@@ -497,8 +497,8 @@ class MCP2515
         void clearTXInterrupts(void);
         uint8_t getStatus(void);
         void clearRXnOVR(void);
-        void clearMERR();
-        void clearERRIF();
+        void clearMERR(void);
+        void clearERRIF(void);
         uint8_t errorCountRX(void);
         uint8_t errorCountTX(void);
 };

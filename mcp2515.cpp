@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "pico/time.h"
+#include "pico/binary_info.h"
 
 const struct MCP2515::TXBn_REGS MCP2515::TXB[MCP2515::N_TXBUFFERS] = {
     {MCP_TXB0CTRL, MCP_TXB0SIDH, MCP_TXB0DATA},
@@ -15,10 +16,23 @@ const struct MCP2515::RXBn_REGS MCP2515::RXB[N_RXBUFFERS] = {
     {MCP_RXB1CTRL, MCP_RXB1SIDH, MCP_RXB1DATA, CANINTF_RX1IF}
 };
 
-MCP2515::MCP2515(spi_inst_t* _spi_port, const uint spi_baud, const uint8_t _CS) :
+MCP2515::MCP2515(spi_inst_t* _spi_port, const uint spi_baud, const uint spi_sck, const uint spi_tx, const uint spi_rx, const uint8_t _spi_cs) :
     spi_port(_spi_port),
-    SPICS(_CS)
+    SPICS(_spi_cs)
 {
+    gpio_set_function(spi_rx, GPIO_FUNC_SPI);
+    gpio_set_function(spi_sck, GPIO_FUNC_SPI);
+    gpio_set_function(spi_tx, GPIO_FUNC_SPI);
+    // Make the SPI pins available to picotool
+    bi_decl(bi_3pins_with_func(spi_rx, spi_tx, spi_sck, GPIO_FUNC_SPI));
+
+    // Chip select is active-low, so we'll initialise it to a driven-high state
+    gpio_init(SPICS);
+    gpio_set_dir(SPICS, GPIO_OUT);
+    gpio_put(SPICS, 1);
+    // Make the CS pin available to picotool
+    bi_decl(bi_1pin_with_name(SPICS, "SPI CS"));
+
     spi_init(spi_port, spi_baud);
     // MCP2515 uses SPI Mode 0: CPOL = 0, CPHA = 0
     spi_set_format(spi_port, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
