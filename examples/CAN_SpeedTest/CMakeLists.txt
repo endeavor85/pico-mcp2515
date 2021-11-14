@@ -1,5 +1,5 @@
 add_executable(mcp2515-CAN_SpeedTest-example
-CAN_SpeedTest.cpp
+	CAN_SpeedTest.cpp
 	../../mcp2515.cpp
 )
 

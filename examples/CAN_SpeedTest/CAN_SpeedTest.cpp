@@ -12,10 +12,10 @@
 #define SPI_PORT spi0
 #define SPI_BAUD 10 * 1000000
 
-#define SPI_SCK 2
-#define SPI_TX  3
-#define SPI_RX  4
-#define SPI_CS  5
+#define SPI_SCK 18
+#define SPI_TX  19
+#define SPI_RX  16
+#define SPI_CS  17
 
 int main(int argc, char **argv) {
     // turn on board LED
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 
     MCP2515 mcp2515(SPI_PORT, SPI_BAUD, SPI_SCK, SPI_TX, SPI_RX, SPI_CS);
 
-    struct can_frame canMsg;
+    can_frame canMsg;
 
     mcp2515.reset();
     mcp2515.setBitrate(CAN_125KBPS, MCP_8MHZ);
