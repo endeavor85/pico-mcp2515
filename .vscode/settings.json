@@ -1,7 +1,7 @@
 {
     "cmake.sourceDirectory": "${workspaceFolder}/examples",
     "cmake.configureEnvironment": {
-        "PICO_SDK_PATH": "/workspaces/pico-mcp2515/pico-sdk"
+        "PICO_SDK_PATH": "${workspaceFolder}/lib/pico-sdk"
     },
     "files.associations": {
         "*.tag": "html",
@@ -56,8 +56,5 @@
     },
     "doxdocgen.generic.paramTemplate": "@param {param}{indent:24}TODO",
     "doxdocgen.generic.useGitUserEmail": true,
-    "doxdocgen.generic.useGitUserName": true,
-    "cmake.environment": {
-        "PICO_SDK_PATH": "/workspaces/pico-mcp2515/pico-sdk"
-    }
+    "doxdocgen.generic.useGitUserName": true
 }

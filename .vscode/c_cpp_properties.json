@@ -5,8 +5,6 @@
             "includePath": [
                 "${default}",
                 "${workspaceFolder}/**",
-                "/workspaces/pico-mcp2515/**",
-                "/workspaces/pico-mcp2515/pico-sdk/**",
                 "/usr/lib/gcc/arm-none-eabi/**"
             ],
             "defines": [],
